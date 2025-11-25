@@ -1,32 +1,35 @@
-# Import urlopen from the urllib module
-from urllib.request import urlopen
-
-# Import regular expression functionality
+from urllib.request import urlopen, Request
 import re
+import json
 
-# Import unescaped from HTML
-from html import unescape
-
-# URL to GET
 url = "https://en.wikipedia.org/w/api.php?action=parse&prop=wikitext&format=json&page=Mount_Tambora"
 
+req = Request(
+    url,
+    headers={
+        "User-Agent": "QuickStartGuides/1.0 (support@quickstartguides.com)"
+    }
+)
+
 # Request the page
-response = urlopen(url)
+response = urlopen(req)
 
-# Get the page content
-page_content = str(response.read())
+# Properly decode the bytes
+data = response.read().decode("utf-8")
 
-# Unescape the page
-page_content = unescape(page_content)
+# Parse the JSON
+json_data = json.loads(data)
 
-# Use this regex to find the elevation of Mt. Tambora
-regex = r"elevation\_m\s=\s(\d*)"
+# Extract only the wikitext
+wikitext = json_data["parse"]["wikitext"]["*"]
 
-# Perform the search
-result = re.search(regex, page_content)
+# Regex to find elevation in wikitext
+regex = r"elevation_m\s*=\s*(\d+)"
 
-# Fetch the first match (which is the elevation)
-elevation = result[1]
+match = re.search(regex, wikitext)
 
-# Print the elevation
-print("The elevation of Mt. Tambora is " + str(elevation) + ".")
+if match:
+    elevation = match.group(1)
+    print("The elevation of Mt. Tambora is " + elevation + ".")
+else:
+    print("Elevation not found.")
